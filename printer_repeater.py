@@ -1,18 +1,19 @@
 from configparser import ConfigParser
-import serial
-import socket
-import threading
+from serial import Serial
+from socket import socket
 import logging
 import os
 import sys
 
 cp = ConfigParser()
 
-dirpath = os.path.dirname(os.path.realpath(sys.argv[0]))
+dir_path = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-cp.read(os.path.join(dirpath, 'printer.cfg'))
+cp.read(os.path.join(dir_path, 'printer_repeater.cfg'))
 
-logging.basicConfig(filename=os.path.join(dirpath, 'app.log'), filemode="w",
+log_file = open(os.path.join(dir_path, 'app.log'), encoding="utf-8", mode="a")
+
+logging.basicConfig(stream=log_file,
                     format="%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%M-%d %H:%M:%S",
                     level=logging.DEBUG)
 
@@ -31,7 +32,7 @@ else:
 
 def open_port():
     if mode == 'serial':
-        port = serial.Serial(portName, baudRate)
+        port = Serial(portName, baudRate)
     else:
         port = open(portName, 'wb')
     logging.debug('打开端口[%s]' % portName)
@@ -39,12 +40,15 @@ def open_port():
 
 
 def send(port, data):
-    if mode == 'serial':  # 串口
-        port.write(data)
-        port.flushOutput()
-    else:  # 并口
-        port.write(data)
-        port.flush()
+    try:
+        if mode == 'serial':  # 串口
+            port.write(data)
+            port.flushOutput()
+        else:  # 并口
+            port.write(data)
+            port.flush()
+    except Exception as e:
+        logging.error('写入数据失败 ' + str(e))
 
 
 def close(port):
@@ -53,26 +57,28 @@ def close(port):
 
 
 def tcp_link(sock, addr):
-    port = open_port()
-    while True:
-        data = sock.recv(1024)
-        if not data: break
-        send(port, data)
-    close(port)
-    sock.close()
-    logging.debug("接收数据完成")
+    try:
+        port = open_port()
+        while True:
+            data = sock.recv(1024)
+            if not data: break
+            send(port, data)
+        close(port)
+        sock.close()
+        logging.debug("接收数据完成")
+    except Exception as e:
+        logging.error('接收数据失败 ' + str(e))
 
 
 def main():
-    server = socket.socket()
+    server = socket()
     server.bind(('0.0.0.0', 9100))
     server.listen(5)
     logging.debug('服务启动完成, 监听9100端口, 等待接收数据...')
     while True:
         sock, addr = server.accept()
         logging.debug('%s:%s 已连接' % (addr[0], addr[1]))
-        t = threading.Thread(target=tcp_link, args=(sock, addr))
-        t.start()
+        tcp_link(sock, addr)
 
 
 if __name__ == '__main__':

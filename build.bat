@@ -1,19 +1,18 @@
-sc stop PrinterRepeater
-
-sc delete PrinterRepeater
-
 TIMEOUT /T 3
 
 rmdir /s/q dist
 
 rmdir /s/q build
 
-del PrinterRepeater.spec
+del printer_repeater.spec
 
-pyinstaller -F -y PrinterRepeater.py --upx-dir upx394a
+pyinstaller -F -n printer_repeater -y WinService.py --upx-dir upx394a
 
-copy printer.cfg dist
+copy printer_repeater.cfg dist
 
-dist\PrinterRepeater.exe install
+copy start.bat dist
 
-sc start PrinterRepeater
+copy stop.bat dist
+
+del printer_repeater.spec
+

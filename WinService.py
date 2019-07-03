@@ -5,9 +5,9 @@ import win32timezone
 import os
 
 
-class PrinterRepeater(win32serviceutil.ServiceFramework):
-    _svc_name_ = 'PrinterRepeater'
-    _svc_display_name_ = 'PrinterRepeater'
+class WinService(win32serviceutil.ServiceFramework):
+    _svc_name_ = 'printer_repeater'
+    _svc_display_name_ = 'printer_repeater'
     _svc_description_ = '打印转发服务'
 
     def __init__(self, args):
@@ -16,7 +16,7 @@ class PrinterRepeater(win32serviceutil.ServiceFramework):
         self.run = True
 
     def SvcDoRun(self):
-        from printer import main
+        from printer_repeater import main
         main()
         self.ReportServiceStatus(win32service.SERVICE_RUNNING)
 
@@ -34,8 +34,8 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         try:
             evtsrc_dll = os.path.abspath(servicemanager.__file__)
-            servicemanager.PrepareToHostSingle(PrinterRepeater)  # 如果修改过名字，名字要统一
-            servicemanager.Initialize('PrinterRepeater', evtsrc_dll)  # 如果修改过名字，名字要统一
+            servicemanager.PrepareToHostSingle(WinService)  # 如果修改过名字，名字要统一
+            servicemanager.Initialize('WinService', evtsrc_dll)  # 如果修改过名字，名字要统一
             servicemanager.StartServiceCtrlDispatcher()
         except win32service.error as details:
             import winerror
@@ -43,4 +43,4 @@ if __name__ == '__main__':
             if details == winerror.ERROR_FAILED_SERVICE_CONTROLLER_CONNECT:
                 win32serviceutil.usage()
     else:
-        win32serviceutil.HandleCommandLine(PrinterRepeater)  # 如果修改过名字，名字要统一
+        win32serviceutil.HandleCommandLine(WinService)  # 如果修改过名字，名字要统一
